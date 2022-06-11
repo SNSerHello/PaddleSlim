@@ -23,37 +23,44 @@ from setuptools import setup
 
 slim_version = "2.3.0"
 
-with open('./requirements.txt') as f:
+with open("./requirements.txt") as f:
     setup_requires = f.read().splitlines()
 
+if platform.sys.platform == "win32":
+    try:
+        setup_requires.remove("paddleslim-opt-tools")
+    except:
+        pass
+
 setup(
-    name='paddleslim',
+    name="paddleslim",
     version=slim_version,
-    description=('A toolkit for generating small model.'),
-    long_description='',
-    url='http://gitlab.baidu.com/PaddlePaddle/PaddleSlim',
-    author='PaddlePaddle Author',
-    author_email='dltp-all@baidu.com',
+    description=("A toolkit for generating small model."),
+    long_description="",
+    url="http://gitlab.baidu.com/PaddlePaddle/PaddleSlim",
+    author="PaddlePaddle Author",
+    author_email="dltp-all@baidu.com",
     install_requires=setup_requires,
     packages=find_packages(),
     # PyPI package information.
     classifiers=[
-        'Development Status :: 4 - Beta',
-        'Intended Audience :: Developers',
-        'Intended Audience :: Education',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: Apache Software License',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Topic :: Scientific/Engineering',
-        'Topic :: Scientific/Engineering :: Mathematics',
-        'Topic :: Scientific/Engineering :: Artificial Intelligence',
-        'Topic :: Software Development',
-        'Topic :: Software Development :: Libraries',
-        'Topic :: Software Development :: Libraries :: Python Modules',
+        "Development Status :: 4 - Beta",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Education",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: Apache Software License",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Topic :: Scientific/Engineering",
+        "Topic :: Scientific/Engineering :: Mathematics",
+        "Topic :: Scientific/Engineering :: Artificial Intelligence",
+        "Topic :: Software Development",
+        "Topic :: Software Development :: Libraries",
+        "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    license='Apache 2.0',
-    keywords=('PaddleSlim paddlepaddle model-optimize compression'), )
+    license="Apache 2.0",
+    keywords=("PaddleSlim paddlepaddle model-optimize compression"),
+)

@@ -3,8 +3,8 @@
 ```
 $ sudo apt install swig
 $ sudo pip3 install --upgrade -r requirements.txt
-$ python3 setup.py bdist_wheel
-$ sudo pip3 install --upgrade dist/paddleslim-2.3.0-py3-none-any.whl
+$ python3 setup.py bdist_wheel --universal
+$ sudo pip3 install --upgrade dist/paddleslim-2.3.0-py2.py3-none-any.whl
 ```
 
 <p align="center">
