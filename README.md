@@ -2,7 +2,7 @@
 
 ```
 $ sudo apt install swig
-$ sudo pip3 install -r requirements.txt
+$ sudo pip3 install --upgrade -r requirements.txt
 $ python3 setup.py bdist_wheel
 $ sudo pip3 install --upgrade dist/paddleslim-2.3.0-py3-none-any.whl
 ```
