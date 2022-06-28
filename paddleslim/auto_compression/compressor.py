@@ -116,7 +116,7 @@ class AutoCompression:
                  as eval_dataloader, and the metric of eval_dataloader for reference only. Dafault: None.
             deploy_hardware(str, optional): The hardware you want to deploy. Default: 'gpu'.
         """
-        self.model_dir = model_dir
+        self.model_dir = model_dir.rstrip('/')
 
         if model_filename == 'None':
             model_filename = None
@@ -144,7 +144,7 @@ class AutoCompression:
         self.train_config = extract_train_config(config)
 
         # prepare dataloader
-        self.feed_vars = get_feed_vars(model_dir, model_filename,
+        self.feed_vars = get_feed_vars(self.model_dir, model_filename,
                                        params_filename)
         self.train_dataloader = wrap_dataloader(train_dataloader,
                                                 self.feed_vars)
@@ -158,7 +158,7 @@ class AutoCompression:
 
         paddle.enable_static()
         self._exe, self._places = self._prepare_envs()
-        self.model_type = self._get_model_type(self._exe, model_dir,
+        self.model_type = self._get_model_type(self._exe, self.model_dir,
                                                model_filename, params_filename)
 
         if self.train_config is not None and self.train_config.use_fleet:
@@ -171,7 +171,7 @@ class AutoCompression:
 
             infer_shape_model = self.create_tmp_dir(
                 self.final_dir, prefix="infer_shape_model_")
-            self._infer_shape(model_dir, self.model_filename,
+            self._infer_shape(self.model_dir, self.model_filename,
                               self.params_filename, input_shapes,
                               infer_shape_model)
             self.model_dir = infer_shape_model
@@ -205,13 +205,14 @@ class AutoCompression:
 
         train_configs = [train_config]
         for idx in range(1, len(self._strategy)):
-            if 'qat' in self._strategy[idx]:
-                ### if compress strategy more than one, the train config in the yaml set for prune
-                ### the train config for quantization is extrapolate from the yaml
+            if 'qat' in self._strategy[idx] or 'ptq' in self._strategy[idx]:
+                ### If compress strategy more than one, the TrainConfig in the yaml only used in prune.
+                ### The TrainConfig for quantization is extrapolate from above.
                 tmp_train_config = copy.deepcopy(train_config.__dict__)
                 ### the epoch, train_iter, learning rate of quant is 10% of the prune compress
-                tmp_train_config['epochs'] = max(
-                    int(train_config.epochs * 0.1), 1)
+                if self.model_type != 'transformer':
+                    tmp_train_config['epochs'] = max(
+                        int(train_config.epochs * 0.1), 1)
                 if train_config.train_iter is not None:
                     tmp_train_config['train_iter'] = int(
                         train_config.train_iter * 0.1)
@@ -228,8 +229,6 @@ class AutoCompression:
                             map(lambda x: x * 0.1, train_config.learning_rate[
                                 'values']))
                 train_cfg = TrainConfig(**tmp_train_config)
-            elif 'ptq' in self._strategy[idx]:
-                train_cfg = None
             else:
                 tmp_train_config = copy.deepcopy(train_config.__dict__)
                 train_cfg = TrainConfig(**tmp_train_config)
@@ -802,11 +801,12 @@ class AutoCompression:
             for name in test_program_info.feed_target_names
         ]
 
+        model_name = '.'.join(self.model_filename.split(
+            '.')[:-1]) if self.model_filename is not None else 'model'
+        path_prefix = os.path.join(model_dir, model_name)
         paddle.static.save_inference_model(
-            path_prefix=str(model_dir),
+            path_prefix=path_prefix,
             feed_vars=feed_vars,
             fetch_vars=test_program_info.fetch_targets,
             executor=self._exe,
-            program=test_program,
-            model_filename=self.model_filename,
-            params_filename=self.params_filename)
+            program=test_program)
