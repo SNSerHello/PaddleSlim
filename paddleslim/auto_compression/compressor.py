@@ -151,8 +151,9 @@ class AutoCompression:
         self.train_dataloader = wrap_dataloader(train_dataloader,
                                                 self.feed_vars)
         self.eval_dataloader = wrap_dataloader(eval_dataloader, self.feed_vars)
-        if eval_dataloader is None:
-            eval_dataloader = self._get_eval_dataloader(self.train_dataloader)
+        if self.eval_dataloader is None:
+            self.eval_dataloader = self._get_eval_dataloader(
+                self.train_dataloader)
 
         self.target_speedup = target_speedup
         self.eval_function = eval_callback
@@ -465,10 +466,10 @@ class AutoCompression:
                     'train_config must has `epochs` or `train_iter` field.')
             config_dict['gmp_config'] = {
                 'stable_iterations': 0,
-                'pruning_iterations': 0.45 * total_iters,
-                'tunning_iterations': 0.45 * total_iters,
+                'pruning_iterations': max(0.45 * total_iters, 30),
+                'tunning_iterations': max(0.45 * total_iters, 30),
                 'resume_iteration': -1,
-                'pruning_steps': 100,
+                'pruning_steps': 100 if (0.45 * total_iters) > 1000 else 1,
                 'initial_ratio': 0.15,
             }
         ### add prune program
@@ -586,28 +587,11 @@ class AutoCompression:
         tmp_model_path = os.path.join(
             self.tmp_dir, 'strategy_{}'.format(str(strategy_idx + 1)))
         final_model_path = os.path.join(self.final_dir)
-        if not os.path.exists(final_model_path):
-            os.makedirs(final_model_path)
-
-        tmp_model_file = ".".join([tmp_model_path, "pdmodel"])
-        if not os.path.exists(tmp_model_file):
-            tmp_model_file = os.path.join(tmp_model_path, self.model_filename)
-
-        tmp_params_file = ".".join([tmp_model_path, "pdiparams"])
-        if not os.path.exists(tmp_params_file):
-            tmp_params_file = os.path.join(tmp_model_path, self.params_filename)
-
-        if self.model_filename is None:
-            self.model_filename = "infer.pdmodel"
-        if self.params_filename is None:
-            self.params_filename = "infer.pdiparams"
-
-        final_model_file = os.path.join(final_model_path, self.model_filename)
-        final_params_file = os.path.join(final_model_path, self.params_filename)
-
         if paddle.distributed.get_rank() == 0:
-            shutil.move(tmp_model_file, final_model_file)
-            shutil.move(tmp_params_file, final_params_file)
+            for _file in os.listdir(tmp_model_path):
+                _file_path = os.path.join(tmp_model_path, _file)
+                if os.path.isfile(_file_path):
+                    shutil.copy(_file_path, final_model_path)
             shutil.rmtree(self.tmp_dir)
             _logger.info(
                 "==> The ACT compression has been completed and the final model is saved in `{}`".

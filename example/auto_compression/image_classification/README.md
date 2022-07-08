@@ -21,28 +21,28 @@
 
 ### PaddleClas模型
 
-| 模型 | 策略 | Top-1 Acc | GPU 耗时(ms) | ARM CPU 耗时(ms) |
-|:------:|:------:|:------:|:------:|:------:|
-| MobileNetV1 | Baseline | 70.90 | - | 33.15 |
-| MobileNetV1 | 量化+蒸馏 | 70.57 | - | 13.64 |
-| ResNet50_vd | Baseline | 79.12 | 3.19 | - |
-| ResNet50_vd | 量化+蒸馏 | 78.74 | 0.92 | - |
-| ShuffleNetV2_x1_0 | Baseline | 68.65 | - | 10.43 |
-| ShuffleNetV2_x1_0 | 量化+蒸馏 | 68.32 | - | 5.51 |
-| SqueezeNet1_0_infer | Baseline | 59.60 | - | 35.98 |
-| SqueezeNet1_0_infer | 量化+蒸馏 | 59.45 | - | 16.96 |
-| PPLCNetV2_base | Baseline | 76.86 | - | 36.50 |
-| PPLCNetV2_base | 量化+蒸馏 | 76.43 | - | 15.79 |
-| PPHGNet_tiny | Baseline | 79.59 | 2.82 | - |
-| PPHGNet_tiny | 量化+蒸馏 | 79.20 | 0.98 | - |
-| InceptionV3 | Baseline | 79.14 | 4.79 | - |
-| InceptionV3 | 量化+蒸馏 | 78.32 | 1.47 | - |
-| EfficientNetB0 | Baseline | 77.02 | 1.95 | - |
-| EfficientNetB0 | 量化+蒸馏 | 75.39 | 1.44 | - |
-| GhostNet_x1_0 | Baseline | 74.02 | 2.93 | - |
-| GhostNet_x1_0 | 量化+蒸馏 | 72.62 | 1.03 | - |
-| MobileNetV3_large_x1_0 | Baseline | 75.32 | - | 16.62 |
-| MobileNetV3_large_x1_0 | 量化+蒸馏 | 70.93 | - | 9.85 |
+| 模型 | 策略 | Top-1 Acc | GPU 耗时(ms) | ARM CPU 耗时(ms) | 配置文件 | Inference模型 |
+|:------:|:------:|:------:|:------:|:------:|:------:|:------:|
+| MobileNetV1 | Baseline | 70.90 | - | 33.15 | - | [Model](https://paddle-imagenet-models-name.bj.bcebos.com/dygraph/inference/MobileNetV1_infer.tar) |
+| MobileNetV1 | 量化+蒸馏 | 70.57 | - | 13.64 | [Config](./config/MobileNetV1/qat_dis.yaml) | [Model](https://paddle-slim-models.bj.bcebos.com/act/MobileNetV1_QAT.tar) |
+| ResNet50_vd | Baseline | 79.12 | 3.19 | - | - | [Model](https://paddle-imagenet-models-name.bj.bcebos.com/dygraph/inference/ResNet50_vd_infer.tar) |
+| ResNet50_vd | 量化+蒸馏 | 78.74 | 0.92 | - | [Config](./config/ResNet50_vd/qat_dis.yaml) | [Model](https://paddle-slim-models.bj.bcebos.com/act/ResNet50_vd_QAT.tar) |
+| ShuffleNetV2_x1_0 | Baseline | 68.65 | - | 10.43 | - | [Model](https://paddle-imagenet-models-name.bj.bcebos.com/dygraph/inference/ShuffleNetV2_x1_0_infer.tar) |
+| ShuffleNetV2_x1_0 | 量化+蒸馏 | 68.32 | - | 5.51 | [Config](./config/ShuffleNetV2_x1_0/qat_dis.yaml) | [Model](https://paddle-slim-models.bj.bcebos.com/act/ShuffleNetV2_x1_0_QAT.tar) |
+| SqueezeNet1_0 | Baseline | 59.60 | - | 35.98 | - | [Model](https://paddle-imagenet-models-name.bj.bcebos.com/dygraph/inference/SqueezeNet1_0_infer.tar) |
+| SqueezeNet1_0 | 量化+蒸馏 | 59.45 | - | 16.96 | [Config](./config/SqueezeNet1_0/qat_dis.yaml) | [Model](https://paddle-slim-models.bj.bcebos.com/act/SqueezeNet1_0_QAT.tar) |
+| PPLCNetV2_base | Baseline | 76.86 | - | 36.50 | - | [Model](https://paddle-imagenet-models-name.bj.bcebos.com/dygraph/inference/PPLCNetV2_base_infer.tar) |
+| PPLCNetV2_base | 量化+蒸馏 | 76.43 | - | 15.79 | [Config](./config/PPLCNetV2_base/qat_dis.yaml) | [Model](https://paddle-slim-models.bj.bcebos.com/act/PPLCNetV2_base_QAT.tar) |
+| PPHGNet_tiny | Baseline | 79.59 | 2.82 | - | - |[Model](https://paddle-imagenet-models-name.bj.bcebos.com/dygraph/inference/PPHGNet_tiny_infer.tar) |
+| PPHGNet_tiny | 量化+蒸馏 | 79.20 | 0.98 | - | [Config](./config/PPHGNet_tiny/qat_dis.yaml) | [Model](https://paddle-slim-models.bj.bcebos.com/act/PPHGNet_tiny_QAT.tar) |
+| InceptionV3 | Baseline | 79.14 | 4.79 | - | - | [Model](https://paddle-imagenet-models-name.bj.bcebos.com/dygraph/inference/InceptionV3_infer.tar) |
+| InceptionV3 | 量化+蒸馏 | 78.32 | 1.47 | - | [Config](./config/InceptionV3/qat_dis.yaml) | [Model](https://paddle-slim-models.bj.bcebos.com/act/InceptionV3_QAT.tar) |
+| EfficientNetB0 | Baseline | 77.02 | 1.95 | - | - | [Model](https://paddle-imagenet-models-name.bj.bcebos.com/dygraph/inference/EfficientNetB0_infer.tar) |
+| EfficientNetB0 | 量化+蒸馏 | 75.39 | 1.44 | - | [Config](./config/EfficientNetB0/qat_dis.yaml) | [Model](https://paddle-slim-models.bj.bcebos.com/act/EfficientNetB0_QAT.tar) |
+| GhostNet_x1_0 | Baseline | 74.02 | 2.93 | - | - | [Model](https://paddle-imagenet-models-name.bj.bcebos.com/dygraph/inference/GhostNet_x1_0_infer.tar) |
+| GhostNet_x1_0 | 量化+蒸馏 | 72.62 | 1.03 | - | [Config](./config/GhostNet_x1_0/qat_dis.yaml) | [Model](https://paddle-slim-models.bj.bcebos.com/act/GhostNet_x1_0_QAT.tar) |
+| MobileNetV3_large_x1_0 | Baseline | 75.32 | - | 16.62 | - | [Model](https://paddle-imagenet-models-name.bj.bcebos.com/dygraph/inference/MobileNetV3_large_x1_0_infer.tar) |
+| MobileNetV3_large_x1_0 | 量化+蒸馏 | 70.93 | - | 9.85 | [Config](./config/MobileNetV3_large_x1_0/qat_dis.yaml) | [Model](https://paddle-slim-models.bj.bcebos.com/act/MobileNetV3_large_x1_0_QAT.tar) |
 
 - ARM CPU 测试环境：`SDM865(4xA77+4xA55)`
 - Nvidia GPU 测试环境：
@@ -56,7 +56,7 @@
 
 - python >= 3.6
 - PaddlePaddle >= 2.3 （可从[Paddle官网](https://www.paddlepaddle.org.cn/install/quick?docurl=/documentation/docs/zh/install/pip/linux-pip.html)下载安装）
-- PaddleSlim develop版本
+- PaddleSlim >= 2.3
 
 安装paddlepaddle：
 ```shell
@@ -68,8 +68,7 @@ pip install paddlepaddle-gpu
 
 安装paddleslim：
 ```shell
-https://github.com/PaddlePaddle/PaddleSlim.git
-python setup.py install
+pip install paddleslim
 ```
 
 #### 3.2 准备数据集
@@ -123,18 +122,19 @@ python infer.py --config_path="configs/infer.yaml"
 ```
 
 在配置文件```configs/infer.yaml```中有以下字段用于配置预测参数：
-- ```Global.infer_imgs```：待预测的图片文件路径
-- ```Global.inference_model_dir```：inference 模型文件所在目录，该目录下需要有文件 .pdmodel 和 .pdiparams 两个文件
-- ```Global.use_tensorrt```：是否使用 TesorRT 预测引擎
-- ```Global.use_gpu```：是否使用 GPU 预测
-- ```Global.enable_mkldnn```：是否启用```MKL-DNN```加速库，注意```enable_mkldnn```与```use_gpu```同时为```True```时，将忽略```enable_mkldnn```，而使用```GPU```预测
-- ```Global.use_fp16```：是否启用```FP16```
-- ```PreProcess```：用于数据预处理配置
-- ```PostProcess```：由于后处理配置
-- ```PostProcess.Topk.class_id_map_file```：数据集 label 的映射文件，默认为```./images/imagenet1k_label_list.txt```，该文件为 PaddleClas 所使用的 ImageNet 数据集 label 映射文件
+- ```model_dir```：inference 模型文件所在目录，该目录下需要有文件 .pdmodel 和 .pdiparams 两个文件
+- ```model_filename```：model_dir文件夹下的模型文件名称
+- ```params_filename```：model_dir文件夹下的参数文件名称
+- ```batch_size```：预测一个batch的大小
+- ```image_size```：输入图像的大小
+- ```use_tensorrt```：是否使用 TesorRT 预测引擎
+- ```use_gpu```：是否使用 GPU 预测
+- ```enable_mkldnn```：是否启用```MKL-DNN```加速库，注意```enable_mkldnn```与```use_gpu```同时为```True```时，将忽略```enable_mkldnn```，而使用```GPU```预测
+- ```use_fp16```：是否启用```FP16```
+- ```use_int8```：是否启用```INT8```
 
 注意：
-- 请注意模型的输入数据尺寸，如InceptionV3输入尺寸为299，所以部分模型需要修改参数：```PreProcess.resize_short```, ```PreProcess.resize```
+- 请注意模型的输入数据尺寸，如InceptionV3输入尺寸为299，部分模型需要修改参数：```image_size```
 - 如果希望提升评测模型速度，使用 ```GPU``` 评测时，建议开启 ```TensorRT``` 加速预测，使用 ```CPU``` 评测时，建议开启 ```MKL-DNN``` 加速预测
 - 若使用 TesorRT 预测引擎，需安装 ```WITH_TRT=ON``` 的Paddle，下载地址：[Python预测库](https://paddleinference.paddlepaddle.org.cn/master/user_guides/download_lib.html#python)
 
