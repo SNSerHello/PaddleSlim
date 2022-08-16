@@ -17,10 +17,9 @@ import sys
 import numpy as np
 import argparse
 import paddle
-from ppdet.core.workspace import load_config, merge_config
-from ppdet.core.workspace import create
-from paddleslim.common import load_config as load_slim_config
+from paddleslim.common import load_config, load_onnx_model
 from paddleslim.quant import quant_post_static
+from dataset import COCOTrainDataset
 
 
 def argsparser():
@@ -29,7 +28,7 @@ def argsparser():
         '--config_path',
         type=str,
         default=None,
-        help="path of compression strategy config.",
+        help="path of post training quantization config.",
         required=True)
     parser.add_argument(
         '--save_dir',
@@ -47,49 +46,40 @@ def argsparser():
     return parser
 
 
-def reader_wrapper(reader, input_list):
-    def gen():
-        for data in reader:
-            in_dict = {}
-            if isinstance(input_list, list):
-                for input_name in input_list:
-                    in_dict[input_name] = data[input_name]
-            elif isinstance(input_list, dict):
-                for input_name in input_list.keys():
-                    in_dict[input_list[input_name]] = data[input_name]
-            yield in_dict
-
-    return gen
-
-
 def main():
-    global global_config
-    all_config = load_slim_config(FLAGS.config_path)
-    assert "Global" in all_config, f"Key 'Global' not found in config file. \n{all_config}"
-    global_config = all_config["Global"]
-    reader_cfg = load_config(global_config['reader_config'])
+    global config
+    config = load_config(FLAGS.config_path)
 
-    train_loader = create('EvalReader')(reader_cfg['TrainDataset'],
-                                        reader_cfg['worker_num'],
-                                        return_list=True)
-    train_loader = reader_wrapper(train_loader, global_config['input_list'])
+    dataset = COCOTrainDataset(
+        dataset_dir=config['dataset_dir'],
+        image_dir=config['val_image_dir'],
+        anno_path=config['val_anno_path'])
+    train_loader = paddle.io.DataLoader(
+        dataset, batch_size=1, shuffle=True, drop_last=True, num_workers=0)
 
     place = paddle.CUDAPlace(0) if FLAGS.devices == 'gpu' else paddle.CPUPlace()
     exe = paddle.static.Executor(place)
+
+    # since the type pf model converted from pytorch is onnx,
+    # use load_onnx_model firstly and rename the model_dir
+    load_onnx_model(config["model_dir"])
+    inference_model_path = config["model_dir"].rstrip().rstrip(
+        '.onnx') + '_infer'
+
     quant_post_static(
         executor=exe,
-        model_dir=global_config["model_dir"],
+        model_dir=inference_model_path,
         quantize_model_path=FLAGS.save_dir,
         data_loader=train_loader,
-        model_filename=global_config["model_filename"],
-        params_filename=global_config["params_filename"],
-        batch_size=4,
-        batch_nums=64,
+        model_filename='model.pdmodel',
+        params_filename='model.pdiparams',
+        batch_size=32,
+        batch_nums=10,
         algo=FLAGS.algo,
         hist_percent=0.999,
         is_full_quantize=False,
         bias_correction=False,
-        onnx_format=False)
+        onnx_format=True)
 
 
 if __name__ == '__main__':
