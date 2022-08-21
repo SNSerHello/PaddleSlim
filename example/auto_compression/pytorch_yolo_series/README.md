@@ -14,7 +14,7 @@
 
 ## 1. 简介
 
-本示例将以以[ultralytics/yolov5](https://github.com/ultralytics/yolov5)，[meituan/YOLOv6](https://github.com/meituan/YOLOv6) 和 [WongKinYiu/yolov7](https://github.com/WongKinYiu/yolov7) 目标检测模型为例，借助[X2Paddle](https://github.com/PaddlePaddle/X2Paddle)的能力，将PyTorch框架模型转换为Paddle框架模型，再使用ACT自动压缩功能进行模型压缩，压缩后的模型可使用Paddle Inference或者导出至ONNX，利用TensorRT部署。
+本示例以[ultralytics/yolov5](https://github.com/ultralytics/yolov5)，[meituan/YOLOv6](https://github.com/meituan/YOLOv6) 和 [WongKinYiu/yolov7](https://github.com/WongKinYiu/yolov7) 目标检测模型为例，借助[X2Paddle](https://github.com/PaddlePaddle/X2Paddle)的能力，将PyTorch框架模型转换为Paddle框架模型，再使用ACT自动压缩功能进行模型压缩，压缩后的模型可使用Paddle Inference或者导出至ONNX，利用TensorRT部署。
 
 ## 2.Benchmark
 
@@ -151,7 +151,7 @@ python yolov7_onnx_trt.py --model_path=output/quant_model.onnx --image_file=imag
 进入[cpp_infer](./cpp_infer)文件夹内，请按照[C++ TensorRT Benchmark测试教程](./cpp_infer/README.md)进行准备环境及编译，然后开始测试：
 ```shell
 # 编译
-bash complie.sh
+bash compile.sh
 # 执行
 ./build/trt_run --model_file yolov7_quant/model.pdmodel --params_file yolov7_quant/model.pdiparams --run_mode=trt_int8
 ```
