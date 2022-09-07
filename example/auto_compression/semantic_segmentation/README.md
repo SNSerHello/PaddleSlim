@@ -24,13 +24,13 @@
 | PP-HumanSeg-Lite | 非结构化稀疏+蒸馏 |  92.35 | 37.712 |-| [config](./configs/pp_human/pp_human_sparse.yaml)| - |
 | PP-HumanSeg-Lite | 量化+蒸馏 |  92.84 | 49.656 |-| [config](./configs/pp_human/pp_human_qat.yaml) | [model](https://bj.bcebos.com/v1/paddle-slim-models/act/PaddleSeg/qat/pp_humanseg_qat.zip) (非最佳) |
 | PP-Liteseg | Baseline |  77.04| - | 1.425| - |[model](https://paddleseg.bj.bcebos.com/tipc/easyedge/RES-paddle2-PPLIteSegSTDC1.zip)|
-| PP-Liteseg | 量化训练 |  76.93 | - | 1.158|[config](./configs/pp_liteseg/pp_liteseg_qat.yaml) | [model](https://bj.bcebos.com/v1/paddle-slim-models/act/PaddleSeg/qat/pp-liteseg.zip) |
+| PP-Liteseg | 量化训练 |  76.93 | - | 1.158|[config](./configs/pp_liteseg/pp_liteseg_qat.yaml) | [model](https://bj.bcebos.com/v1/paddle-slim-models/act/PaddleSeg/qat/pp_liteseg_qat.tar) |
 | HRNet | Baseline |  78.97 | - |8.188|-| [model](https://paddleseg.bj.bcebos.com/tipc/easyedge/RES-paddle2-HRNetW18-Seg.zip)|
-| HRNet | 量化训练 |  78.90 | - |5.812| [config](./configs/hrnet/hrnet_qat.yaml) | [model](https://bj.bcebos.com/v1/paddle-slim-models/act/PaddleSeg/qat/hrnet.zip) |
+| HRNet | 量化训练 |  78.90 | - |5.812| [config](./configs/hrnet/hrnet_qat.yaml) | [model](https://bj.bcebos.com/v1/paddle-slim-models/act/PaddleSeg/qat/hrnet_qat.tar) |
 | UNet | Baseline | 65.00  | - |15.291|-| [model](https://paddleseg.bj.bcebos.com/tipc/easyedge/RES-paddle2-UNet.zip) |
-| UNet | 量化训练 |  64.93 | - |10.228| [config](./configs/unet/unet_qat.yaml) | [model](https://bj.bcebos.com/v1/paddle-slim-models/act/PaddleSeg/qat/unet.zip) |
+| UNet | 量化训练 |  64.93 | - |10.228| [config](./configs/unet/unet_qat.yaml) | [model](https://bj.bcebos.com/v1/paddle-slim-models/act/PaddleSeg/qat/unet_qat.tar) |
 | Deeplabv3-ResNet50 | Baseline |  79.90 | -|12.766| -| [model](https://paddleseg.bj.bcebos.com/tipc/easyedge/RES-paddle2-Deeplabv3-ResNet50.zip)|
-| Deeplabv3-ResNet50 | 量化训练 |  78.89 | - |8.839|[config](./configs/deeplabv3/deeplabv3_qat.yaml) | - |
+| Deeplabv3-ResNet50 | 量化训练 |  79.26 | - |8.839|[config](./configs/deeplabv3/deeplabv3_qat.yaml) | [model](https://bj.bcebos.com/v1/paddle-slim-models/act/PaddleSeg/qat/deeplabv3_qat.tar) |
 
 - ARM CPU测试环境：`高通骁龙710处理器(SDM710 2*A75(2.2GHz) 6*A55(1.7GHz))`；
 
@@ -240,6 +240,18 @@ python infer.py \
 --save_file "./humanseg_result_qat.png" \
 --dataset "human" \
 --benchmark True \
+--use_trt True \
+--precision "int8"
+```
+
+执行以下命令，使用Paddle Inference在相应数据集上测试精度:
+
+```
+export CUDA_VISIBLE_DEVICES=0
+python infer.py \
+--model_path "./pp_humanseg_qat/model.pdmodel" \
+--params_path "./pp_humanseg_qat/model.pdiparams" \
+--dataset_config configs/dataset/humanseg_dataset.yaml \
 --use_trt True \
 --precision "int8"
 ```
