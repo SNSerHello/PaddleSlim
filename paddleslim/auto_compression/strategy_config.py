@@ -252,11 +252,14 @@ class QuantPost(BaseStrategy):
 
 
 class ChannelPrune:
-    def __init__(self, pruned_ratio, prune_params_name, criterion='l1_norm'):
+    def __init__(self,
+                 pruned_ratio,
+                 prune_params_name=None,
+                 criterion='l1_norm'):
         """
         ChannelPrune Config.
         Args:
-            pruned_ratio(float): The ratios to be pruned.
+            pruned_ratio(float|list[float]): The ratios to be pruned.
             prune_params_name(list(str)): A list of parameter names to be pruned.
             criterion(str|function): the criterion used to sort channels for pruning, can be choose from ['l1_norm', 'bn_scale', 'geometry_median']. Default: 'l1_norm'.
         """
@@ -266,7 +269,7 @@ class ChannelPrune:
 
 
 class ASPPrune:
-    def __init__(self, prune_params_name):
+    def __init__(self, prune_params_name=None):
         """
         ASPPrune Config.
         Args:
@@ -292,7 +295,7 @@ class UnstructurePrune:
                  threshold=0.01,
                  ratio=0.55,
                  gmp_config=None,
-                 prune_params_type=None,
+                 prune_params_type='conv1x1_only',
                  local_sparsity=False):
         """
         UnstructurePrune Config.
@@ -336,7 +339,6 @@ class TrainConfig:
                  logging_iter=10,
                  origin_metric=None,
                  target_metric=None,
-                 use_fleet=False,
                  amp_config=None,
                  recompute_config=None,
                  sharding_config=None,
@@ -369,8 +371,7 @@ class TrainConfig:
             logging_iter(int): Log period in batches. Default: 10.
             origin_metric(float, optional): The Metric of model before compress, used to check whether the dataloader is correct if is not None. Default: None.
             target_metric(float, optional): The Metric of model after compress, if set target metric, the metric of compressed model satisfy the requirements, will be stop training. If not set, will train epochs as users set. Default: None.
-            use_fleet(bool): Whether to use fleet. Default: False.
-            amp_config(dict, optional): The dictionary contains all the configs of amp. Default: None. The detailed description is as below if use_fleet=False: 
+            amp_config(dict, optional): The dictionary contains all the configs of amp. Default: None. The detailed description is as below when turning on distributed training: 
               .. code-block:: python
                  AMP-O1 `<https://www.paddlepaddle.org.cn/documentation/docs/zh/guides/performance_improving/amp_cn.html#id2>`_ : 
                      {'custom_white_list', set} # The custom white_list. It's the set of ops that support
@@ -386,10 +387,10 @@ class TrainConfig:
                      {'use_fp16_guard': bool} # Whether to use `fp16_guard` when constructing the program.
               ..
               If you want to use AMP-O2, you need to set use_pure_fp16 is True and use_fp16_guard is False.
-              If use_fleet=True, the key of amp_config can reference `<https://www.paddlepaddle.org.cn/documentation/docs/zh/api/paddle/distributed/fleet/DistributedStrategy_cn.html#amp-configs>`_.
+              when turning on distributed training, the key of amp_config can reference `<https://www.paddlepaddle.org.cn/documentation/docs/zh/api/paddle/distributed/fleet/DistributedStrategy_cn.html#amp-configs>`_.
 
-            recompute_config(dict, optional): The dictionary contains all the configs of recompute. Default: None. The recompute config only can be set when use_fleet=True, the key of recompute_config can reference `<https://www.paddlepaddle.org.cn/documentation/docs/zh/api/paddle/distributed/fleet/DistributedStrategy_cn.html#recompute-configs>`_. 
-            sharding_config(dict, optional): The dictionary contains all the configs of sharding. Default: None. The sharding config only can be set when use_fleet=True, the key of sharding_config can reference `<https://www.paddlepaddle.org.cn/documentation/docs/zh/api/paddle/distributed/fleet/DistributedStrategy_cn.html#sharding-configs>`_.
+            recompute_config(dict, optional): The dictionary contains all the configs of recompute. Default: None. The recompute config only can be set when turning on distributed training, the key of recompute_config can reference `<https://www.paddlepaddle.org.cn/documentation/docs/zh/api/paddle/distributed/fleet/DistributedStrategy_cn.html#recompute-configs>`_. 
+            sharding_config(dict, optional): The dictionary contains all the configs of sharding. Default: None. The sharding config only can be set when turning on distributed training, the key of sharding_config can reference `<https://www.paddlepaddle.org.cn/documentation/docs/zh/api/paddle/distributed/fleet/DistributedStrategy_cn.html#sharding-configs>`_.
             sparse_model(bool, optional): Set sparse_model to ``True`` to remove mask tensor when the compress strategy is unstructure prune. Default: False.
         """
         self.epochs = epochs
@@ -400,7 +401,6 @@ class TrainConfig:
         self.logging_iter = logging_iter
         self.origin_metric = origin_metric
         self.target_metric = target_metric
-        self.use_fleet = use_fleet
         self.amp_config = amp_config
         self.recompute_config = recompute_config
         self.sharding_config = sharding_config
@@ -428,16 +428,18 @@ class ProgramInfo:
                  feed_target_names,
                  fetch_targets,
                  optimizer=None,
-                 learning_rate=None):
+                 learning_rate=None,
+                 loss_dict=None):
         """
         ProgramInfo Config.
         Args:
-            startup_program(paddle.static.Program): Startup program, the means of startup program can reference `<https://www.paddlepaddle.org.cn/documentation/docs/zh/api/paddle/static/default_startup_program_cn.html#cn-api-fluid-default-startup-program>`_.
-            program(paddle.static.Program): main program, the means of main program can reference `<https://www.paddlepaddle.org.cn/documentation/docs/zh/api/paddle/static/default_main_program_cn.html#cn-api-fluid-default-main-program>`_.
+            startup_program(paddle.static.Program): Startup program, the means of startup program can reference `<https://www.paddlepaddle.org.cn/documentation/docs/zh/api/paddle/static/default_startup_program_cn.html#default-startup-program>`_.
+            program(paddle.static.Program): main program, the means of main program can reference `<https://www.paddlepaddle.org.cn/documentation/docs/zh/api/paddle/static/default_main_program_cn.html#default-main-program>`_.
             feed_target_names(list(str)): The name of feed tensor in the program.
             fetch_targets(list(Variable)): The fetch variable in the program.
             optimizer(Optimizer, optional): Optimizer in training. Default: None.
             learning_rate(float|paddle.optimizer.lr, optional): learning_rate in training. Default: None.
+            loss_dict(dict): The components of losses.
         """
         self.startup_program = startup_program
         self.program = program
@@ -445,3 +447,4 @@ class ProgramInfo:
         self.fetch_targets = fetch_targets
         self.optimizer = optimizer
         self.learning_rate = learning_rate
+        self.loss_dict = loss_dict

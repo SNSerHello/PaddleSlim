@@ -14,7 +14,6 @@
 ## 1. 简介
 本示例将以目标检测模型PP-YOLOE为例，介绍如何使用PaddleDetection中Inference部署模型进行自动压缩。本示例使用的自动压缩策略为量化蒸馏。
 
-
 ## 2.Benchmark
 
 ### PP-YOLOE
@@ -28,6 +27,18 @@
 - mAP的指标均在COCO val2017数据集中评测得到，IoU=0.5:0.95。
 - PP-YOLOE-l模型在Tesla V100的GPU环境下测试，并且开启TensorRT，batch_size=1，包含NMS，测试脚本是[benchmark demo](https://github.com/PaddlePaddle/PaddleDetection/tree/release/2.4/deploy/python)。
 - PP-YOLOE-s模型在Tesla T4，TensorRT 8.4.1，CUDA 11.2，batch_size=1，不包含NMS，测试脚本是[cpp_infer_ppyoloe](./cpp_infer_ppyoloe)。
+
+### YOLOv8
+
+| 模型  | Base mAP | 离线量化mAP | ACT量化mAP | TRT-FP32 | TRT-FP16 | TRT-INT8 |  配置文件 | 量化模型  |
+| :-------- |:-------- |:--------: | :---------------------: | :----------------: | :----------------: | :---------------: | :----------------------: | :---------------------: |
+| YOLOv8-s | 44.9 |  43.9 | 44.3  |   9.27ms  |   4.65ms   |  **3.78ms**  |  [config](https://github.com/PaddlePaddle/PaddleSlim/blob/develop/example/auto_compression/detection/configs/yolov8_s_qat_dis.yaml) | [Model](https://bj.bcebos.com/v1/paddle-slim-models/act/yolov8_s_500e_coco_trt_nms_quant.tar) |
+
+**注意：**
+- 表格中YOLOv8模型均为带NMS的模型，可直接在TRT中部署，如果需要对齐测试标准，需要测试不带NMS的模型。
+- mAP的指标均在COCO val2017数据集中评测得到，IoU=0.5:0.95。
+- 表格中的性能在Tesla T4的GPU环境下测试，并且开启TensorRT，batch_size=1。
+
 ### SSD on Pascal VOC
 | 模型  | Box AP | ACT量化Box AP | TRT-FP32 | TRT-INT8 |  配置文件 | 量化模型  |
 | :-------- |:-------- | :---------------------: | :----------------: | :---------------: | :----------------------: | :---------------------: |
@@ -36,17 +47,17 @@
 ## 3. 自动压缩流程
 
 #### 3.1 准备环境
-- PaddlePaddle >= 2.3 （可从[Paddle官网](https://www.paddlepaddle.org.cn/install/quick?docurl=/documentation/docs/zh/install/pip/linux-pip.html)下载安装）
-- PaddleSlim >= 2.3
+- PaddlePaddle >= 2.4 （可从[Paddle官网](https://www.paddlepaddle.org.cn/install/quick?docurl=/documentation/docs/zh/install/pip/linux-pip.html)下载安装）
+- PaddleSlim >= 2.4
 - PaddleDet >= 2.4
 - opencv-python
 
 安装paddlepaddle：
 ```shell
 # CPU
-pip install paddlepaddle==2.3.2
+pip install paddlepaddle==2.4.1
 # GPU 以Ubuntu、CUDA 11.2为例
-python -m pip install paddlepaddle-gpu==2.3.2.post112 -f https://www.paddlepaddle.org.cn/whl/linux/mkl/avx/stable.html
+python -m pip install paddlepaddle-gpu==2.4.1.post112 -f https://www.paddlepaddle.org.cn/whl/linux/mkl/avx/stable.html
 ```
 
 安装paddleslim：
@@ -98,6 +109,16 @@ python tools/export_model.py \
         -o weights=https://paddledet.bj.bcebos.com/models/ppyoloe_crn_s_300e_coco.pdparams \
         trt=True exclude_post_process=True \
 ```
+
+YOLOv8-s模型，包含NMS，具体可参考[YOLOv8模型文档](https://github.com/PaddlePaddle/PaddleYOLO/tree/release/2.5/configs/yolov8), 然后执行：
+```shell
+python tools/export_model.py \
+        -c configs/yolov8/yolov8_s_500e_coco.yml \
+        -o weights=https://paddledet.bj.bcebos.com/models/yolov8_s_500e_coco.pdparams \
+        trt=True
+```
+
+如快速体验，可直接下载[YOLOv8-s导出模型](https://bj.bcebos.com/v1/paddle-slim-models/act/yolov8_s_500e_coco_trt_nms.tar)
 
 #### 3.4 自动压缩并产出模型
 

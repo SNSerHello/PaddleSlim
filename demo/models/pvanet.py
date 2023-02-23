@@ -2,10 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 import paddle
-import paddle.fluid as fluid
 from paddle.nn.initializer import KaimingUniform
-import os, sys, time, math
-import numpy as np
 from collections import namedtuple
 
 BLOCK_TYPE_MCRELU = 'BLOCK_TYPE_MCRELU'
@@ -22,13 +19,8 @@ class PVANet():
 
     def net(self, input, include_last_bn_relu=True, class_dim=1000):
         conv1 = self._conv_bn_crelu(input, 16, 7, stride=2, name="conv1_1")
-        pool1 = fluid.layers.pool2d(
-            input=conv1,
-            pool_size=3,
-            pool_stride=2,
-            pool_padding=1,
-            pool_type='max',
-            name='pool1')
+        pool1 = paddle.nn.functional.max_pool2d(
+            conv1, 3, stride=2, padding=1, name='pool1')
 
         end_points = {}
         conv2 = self._conv_stage(
@@ -182,13 +174,8 @@ class PVANet():
             paths.append(path_net)
 
         if stride > 1:
-            path_net = fluid.layers.pool2d(
-                input,
-                pool_size=3,
-                pool_stride=2,
-                pool_padding=1,
-                pool_type='max',
-                name=name + '_pool')
+            path_net = paddle.nn.functional.max_pool2d(
+                input, 3, stride=2, padding=1, name=name + '_pool')
             path_net = self._conv_bn_relu(path_net, pool_path_outputs, 1,
                                           name + '_poolproj')
             paths.append(path_net)
@@ -468,15 +455,24 @@ def loss(f_score, f_geo, l_score, l_geo, l_mask, class_num=1):
     abs_geo_diff = paddle.abs(geo_diff)
     l_flag = l_score >= 1
     l_flag = paddle.cast(x=l_flag, dtype="float32")
-    l_flag = fluid.layers.expand(x=l_flag, expand_times=[1, channels, 1, 1])
+    l_flag = paddle.expand(
+        x=l_flag,
+        shape=[
+            l_flag.shape[0], l_flag.shape[1] * channels, l_flag.shape[2],
+            l_flag.shape[3]
+        ])
 
     smooth_l1_sign = abs_geo_diff < l_flag
     smooth_l1_sign = paddle.cast(x=smooth_l1_sign, dtype="float32")
 
     in_loss = abs_geo_diff * abs_geo_diff * smooth_l1_sign + (
         abs_geo_diff - 0.5) * (1.0 - smooth_l1_sign)
-    l_short_edge = fluid.layers.expand(
-        x=l_short_edge, expand_times=[1, channels, 1, 1])
+    l_short_edge = paddle.expand(
+        x=l_short_edge,
+        shape=[
+            l_short_edge.shape[0], l_short_edge.shape[1] * channels,
+            l_short_edge.shape[2], l_short_edge.shape[3]
+        ])
     out_loss = l_short_edge * in_loss * l_flag
     out_loss = out_loss * l_flag
     smooth_l1_loss = paddle.mean(out_loss)

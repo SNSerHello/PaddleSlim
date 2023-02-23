@@ -97,21 +97,16 @@ def convert_python_to_tensor(weight, batch_size, sample_reader):
             if len(result[0]) == batch_size:
                 tensor_result = []
                 for tensor in result:
-                    t = paddle.fluid.Tensor()
                     dat = np.array(tensor, dtype='int64')
                     if len(dat.shape) > 2:
                         dat = dat.reshape((dat.shape[0], dat.shape[2]))
                     elif len(dat.shape) == 1:
                         dat = dat.reshape((-1, 1))
-                    t.set(dat, paddle.CPUPlace())
-                    tensor_result.append(t)
-                tt = paddle.fluid.Tensor()
+                    tensor_result.append(dat)
                 neg_array = cs.searchsorted(np.random.sample(args.nce_num))
                 neg_array = np.tile(neg_array, batch_size)
-                tt.set(
-                    neg_array.reshape((batch_size, args.nce_num)),
-                    paddle.CPUPlace())
-                tensor_result.append(tt)
+                tensor_result.append(
+                    neg_array.reshape((batch_size, args.nce_num)))
                 yield tensor_result
                 result = [[], []]
 
@@ -121,7 +116,7 @@ def convert_python_to_tensor(weight, batch_size, sample_reader):
 def train_loop(args, train_program, reader, py_reader, loss, trainer_id, weight,
                lr):
 
-    py_reader.decorate_tensor_provider(
+    py_reader.set_batch_generator(
         convert_python_to_tensor(weight, args.batch_size, reader.train()))
 
     place = paddle.CPUPlace()
@@ -138,8 +133,8 @@ def train_loop(args, train_program, reader, py_reader, loss, trainer_id, weight,
     if int(os.getenv("CPU_NUM")) > 1:
         build_strategy.reduce_strategy = paddle.static.BuildStrategy.ReduceStrategy.Reduce
 
-    program = paddle.static.CompiledProgram(train_program).with_data_parallel(
-        loss_name=loss.name, build_strategy=build_strategy)
+    program = paddle.static.CompiledProgram(
+        train_program, build_strategy=build_strategy)
 
     for pass_id in range(args.num_passes):
         py_reader.start()
@@ -213,6 +208,7 @@ def train(args):
     loss, py_reader = skip_gram_word2vec(
         word2vec_reader.dict_size,
         args.embedding_size,
+        args.batch_size,
         is_sparse=args.is_sparse,
         neg_num=args.nce_num)
 
@@ -223,7 +219,7 @@ def train(args):
 
     optimizer.minimize(loss)
 
-    # do local training 
+    # do local training
     logger.info("run local training")
     main_program = paddle.static.default_main_program()
     train_loop(args, main_program, word2vec_reader, py_reader, loss, 0,

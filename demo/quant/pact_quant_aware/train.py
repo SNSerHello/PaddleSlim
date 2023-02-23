@@ -18,7 +18,8 @@ from paddleslim.analysis import flops
 from paddleslim.quant import quant_aware, quant_post, convert
 import models
 from utility import add_arguments, print_arguments
-from paddle.fluid.layer_helper import LayerHelper
+from paddle.common_ops_import import LayerHelper
+from paddle.distributed import fleet
 quantization_model_save_dir = './quantization_models/'
 
 _logger = get_logger(__name__, level=logging.INFO)
@@ -68,6 +69,7 @@ add_arg('analysis',          bool, False,
 add_arg('onnx_format',          bool, False,
         "Whether use onnx format or not.")
 add_arg('ce_test',                 bool,   False,       "Whether to CE test.")
+parser.add_argument('fleet',            action='store_true',  help="Whether to turn on distributed training.")
 
 # yapf: enable
 
@@ -120,6 +122,9 @@ def _prepare_envs():
 
 
 def compress(args):
+    if args.fleet:
+        fleet.init(is_collective=True)
+
     num_workers = 4
     shuffle = True
     if args.ce_test:
@@ -146,8 +151,8 @@ def compress(args):
         raise ValueError("{} is not supported.".format(args.data))
 
     image_shape = [int(m) for m in image_shape.split(",")]
-    assert args.model in model_list, "{} is not in lists: {}".format(args.model,
-                                                                     model_list)
+    assert args.model in model_list, "{} is not in lists: {}".format(
+        args.model, model_list)
     image = paddle.static.data(
         name='image', shape=[None] + image_shape, dtype='float32')
     if args.use_pact:
@@ -166,20 +171,24 @@ def compress(args):
 
     if not args.analysis:
         learning_rate, opt = create_optimizer(args)
+        if args.fleet:
+            opt = fleet.distributed_optimizer(opt)
         opt.minimize(avg_cost)
 
     exe, places = _prepare_envs()
     exe.run(paddle.static.default_startup_program())
-
+    sampler = paddle.io.DistributedBatchSampler(
+        train_dataset,
+        shuffle=shuffle,
+        drop_last=True,
+        batch_size=args.batch_size)
     train_loader = paddle.io.DataLoader(
         train_dataset,
         places=places,
         feed_list=[image, label],
-        drop_last=True,
         return_list=False,
-        batch_size=args.batch_size,
+        batch_sampler=sampler,
         use_shared_memory=True,
-        shuffle=shuffle,
         num_workers=num_workers)
 
     valid_loader = paddle.io.DataLoader(
@@ -379,22 +388,12 @@ def compress(args):
             batch_id += 1
             lr.step()
 
-    build_strategy = paddle.static.BuildStrategy()
-    build_strategy.enable_inplace = False
-    build_strategy.fuse_all_reduce_ops = False
-    exec_strategy = paddle.static.ExecutionStrategy()
-    compiled_train_prog = compiled_train_prog.with_data_parallel(
-        loss_name=avg_cost.name,
-        build_strategy=build_strategy,
-        exec_strategy=exec_strategy)
-
     # train loop
     best_acc1 = 0.0
     best_epoch = 0
 
     start_epoch = 0
     if args.checkpoint_dir is not None:
-        ckpt_path = args.checkpoint_dir
         assert args.checkpoint_epoch is not None, "checkpoint_epoch must be set"
         start_epoch = args.checkpoint_epoch
         paddle.static.load(

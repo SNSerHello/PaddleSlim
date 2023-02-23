@@ -93,7 +93,7 @@ class ModelCase4(paddle.nn.Layer):
         x = paddle.stack([x, y], axis=3)
         x = paddle.slice(x, axes=[0], starts=[0], ends=[1])
         x = paddle.exp(x)
-        y += paddle.fluid.layers.uniform_random(y.shape)
+        y += paddle.uniform(y.shape)
         y = paddle.mean(x=y, axis=1, keepdim=True)
         return paddle.greater_equal(x, y)
 
@@ -116,7 +116,7 @@ class ModelCase5(paddle.nn.Layer):
             anchors=anchors,
             conf_thresh=0.01,
             downsample_ratio=32)
-        out = paddle.fluid.layers.matrix_nms(
+        out = paddle.vision.ops.matrix_nms(
             bboxes=boxes,
             scores=scores,
             background_label=0,
@@ -125,7 +125,7 @@ class ModelCase5(paddle.nn.Layer):
             nms_top_k=400,
             keep_top_k=200,
             normalized=False)
-        box, var = paddle.fluid.layers.prior_box(
+        box, var = paddle.vision.ops.prior_box(
             input=image, image=image, min_sizes=[2.], clip=True, flip=True)
         return boxes, scores, box, var, out
 
@@ -147,10 +147,8 @@ class ModelCase6(paddle.nn.Layer):
         x = paddle.unsqueeze(x=x, axis=[2])
         x = self.relu1(x)
         y = paddle.full(shape=x.shape, fill_value=1)
-        # x = paddle.stack([x, y], axis=3)
         x = paddle.slice(x, axes=[0], starts=[0], ends=[1])
         x = paddle.exp(x)
-        # y += paddle.fluid.layers.uniform_random(y.shape)
         y = paddle.expand(y, shape=[1, 768, 768, 2])
         x = paddle.expand(x, shape=[1, 768, 768, 2])
         out = paddle.concat([x, y])
@@ -161,8 +159,8 @@ class ModelCase6(paddle.nn.Layer):
         max_idx = paddle.argmax(
             out1.reshape((outshape[0], outshape[1], outshape[2] * outshape[3])),
             axis=-1)
-        out2 = out2.reshape(
-            (outshape[0], outshape[1], outshape[2] * outshape[3]))
+        out2 = out2.reshape((outshape[0], outshape[1],
+                             outshape[2] * outshape[3]))
         res, _ = self.lstm(out2)
         return res, max_idx
 
@@ -185,7 +183,7 @@ class ModelCase7(paddle.nn.Layer):
             anchors=anchors,
             conf_thresh=0.01,
             downsample_ratio=32)
-        box, var = paddle.fluid.layers.prior_box(
+        box, var = paddle.vision.ops.prior_box(
             input=image, image=image, min_sizes=[2.], clip=True, flip=True)
         return boxes, scores, box, var
 
@@ -238,9 +236,9 @@ class TestCase2(unittest.TestCase):
 
         model_name = '.'.join(model_filename.split('.')[:-1])
         model_path_prefix = os.path.join(model_dir, model_name)
-        [inference_program, feed_target_names, fetch_targets] = (
-            paddle.static.load_inference_model(
-                path_prefix=model_path_prefix, executor=exe))
+        [inference_program, feed_target_names,
+         fetch_targets] = (paddle.static.load_inference_model(
+             path_prefix=model_path_prefix, executor=exe))
 
         if type(input_shapes) in [list, tuple]:
             assert len(
@@ -286,8 +284,8 @@ class TestCase2(unittest.TestCase):
         pred = LatencyPredictor()
         paddle.enable_static()
         with open(pbmodel_file, "rb") as f:
-            fluid_program = paddle.static.Program.parse_from_string(f.read())
-            graph = paddleslim.core.GraphWrapper(fluid_program)
+            _program = paddle.static.Program.parse_from_string(f.read())
+            graph = paddleslim.core.GraphWrapper(_program)
             graph_keys = pred._get_key_info_from_graph(graph=graph)
             assert len(graph_keys) > 0
 
@@ -381,8 +379,8 @@ class TestCase6(unittest.TestCase):
 
         paddle.enable_static()
         with open(pbmodel_file, "rb") as f:
-            fluid_program = paddle.static.Program.parse_from_string(f.read())
-            graph = paddleslim.core.GraphWrapper(fluid_program)
+            _program = paddle.static.Program.parse_from_string(f.read())
+            graph = paddleslim.core.GraphWrapper(_program)
             graph_keys = predictor._get_key_info_from_graph(graph=graph)
             assert len(graph_keys) > 0
 
@@ -404,8 +402,8 @@ class TestCase7(unittest.TestCase):
 
         paddle.enable_static()
         with open(pbmodel_file, "rb") as f:
-            fluid_program = paddle.static.Program.parse_from_string(f.read())
-            graph = paddleslim.core.GraphWrapper(fluid_program)
+            _program = paddle.static.Program.parse_from_string(f.read())
+            graph = paddleslim.core.GraphWrapper(_program)
             graph_keys = predictor._get_key_info_from_graph(graph=graph)
             assert len(graph_keys) > 0
 
